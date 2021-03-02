@@ -8,6 +8,8 @@ from datetime import datetime
 from math import floor
 from binance.client import Client
 import pandas as pd
+import statistics 
+
 
 client = Client("4y2FAri1QZdyNWjO6BLp1FSiO0sXmQcEVKTKZwjfRpaklSbfX3wcLWd5Ikx8M6nw","sgwdst1CBgUDj9HHz74i9O5eJ0Zx2ATuMJUCMCiezC8EaD6xuO8mUyTs10krefXt")
 
@@ -28,25 +30,36 @@ datatot=[]
 
 
 variables=[
-    ["seconds",1,300],
-    ["minutes",60,300],
+    ["seconds",1,30],
+    ["minutes",60,10],
     ["15minutes",900,20],
     ["hours",3600,48],
     ["6hours",21600,12]
     ]
 
+values=[]
 
 
 
-secs=0
+n_minutes=0
 sampls=0
 for v in variables:
-    secs=secs+v[1]*v[2]
+    n_minutes=n_minutes+v[1]*v[2]
     sampls=sampls+v[2]
+    val=[]
+    values.append(val)
+    
+n_minutes=10
+values_seconds=[]
+n_seconds=60
+values_minutes=[]
 
-print(secs/3600/24,sampls)
+for i in range(n_seconds+n_minutes*60):
+    values_seconds.append(0)
+for i in range(n_minutes):
+    values_minutes.append(0)
 
-dedede
+
 while(1):
     data=[]
     count=0
@@ -68,8 +81,30 @@ while(1):
             old_instant=instant
             data.append(record)
             datatot.append(record)
-            average
             count+=1
+            
+            values_seconds.pop(-1)
+            values_seconds.insert(0,record[1])
+            
+            
+            for v in variables:
+                if v[0]=="minutes":
+                    for i in range(v[2]):
+                        #print(i,n_seconds+60*i,n_seconds+60*(i+1))
+                        #print(values_seconds[n_seconds+60*i:n_seconds+60*(i+1)])
+                        values_minutes[i]=floor(statistics.mean(values_seconds[n_seconds+v[1]*i:n_seconds+v[1]*(i+1)]))
+                    print("minutes",values_minutes)
+               else: 
+                    for i in range(v[2]):
+                        #print(i,n_seconds+60*i,n_seconds+60*(i+1))
+                        #print(values_seconds[n_seconds+60*i:n_seconds+60*(i+1)])
+                        values_minutes[i]=floor(statistics.mean(values_seconds[n_seconds+v[1]*i:n_seconds+v[1]*(i+1)]))
+                    print("minutes",values_minutes)
+               e
+            
+            
+            
+            
             
             
             
