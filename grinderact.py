@@ -30,34 +30,35 @@ datatot=[]
 
 
 variables=[
-    ["seconds",1,30],
-    ["minutes",60,10],
-    ["15minutes",900,20],
+    ["seconds",1,300],
+    ["minutes",60,300],
+    ["15minutes",900,24],
     ["hours",3600,48],
-    ["6hours",21600,12]
+    ["6hours",21600,8]
     ]
 
 values=[]
 
 
 
-n_minutes=0
+n_seconds=0
 sampls=0
 for v in variables:
-    n_minutes=n_minutes+v[1]*v[2]
+    v.append(n_seconds)
+    n_seconds=n_seconds+v[1]*v[2]
     sampls=sampls+v[2]
     val=[]
-    values.append(val)
+    v.append(val)
     
-n_minutes=10
+# n_minutes=10
 values_seconds=[]
-n_seconds=60
-values_minutes=[]
+# n_seconds=60
+# values_minutes=[]
 
-for i in range(n_seconds+n_minutes*60):
+for i in range(n_seconds):
     values_seconds.append(0)
-for i in range(n_minutes):
-    values_minutes.append(0)
+# for i in range(n_minutes):
+#     values_minutes.append(0)
 
 
 while(1):
@@ -88,19 +89,11 @@ while(1):
             
             
             for v in variables:
-                if v[0]=="minutes":
-                    for i in range(v[2]):
-                        #print(i,n_seconds+60*i,n_seconds+60*(i+1))
-                        #print(values_seconds[n_seconds+60*i:n_seconds+60*(i+1)])
-                        values_minutes[i]=floor(statistics.mean(values_seconds[n_seconds+v[1]*i:n_seconds+v[1]*(i+1)]))
-                    print("minutes",values_minutes)
-               else: 
-                    for i in range(v[2]):
-                        #print(i,n_seconds+60*i,n_seconds+60*(i+1))
-                        #print(values_seconds[n_seconds+60*i:n_seconds+60*(i+1)])
-                        values_minutes[i]=floor(statistics.mean(values_seconds[n_seconds+v[1]*i:n_seconds+v[1]*(i+1)]))
-                    print("minutes",values_minutes)
-               e
+                v[4]=[]
+                for i in range(v[2]):
+                    v[4].append(floor(statistics.mean(values_seconds[v[3]+v[1]*i:v[3]+v[1]*(i+1)])))
+                    
+                    print(v[0],v[1],v[2],v[3])
             
             
             
