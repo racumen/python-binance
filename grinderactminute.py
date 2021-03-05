@@ -5,10 +5,86 @@ Created on Fri Feb 26 17:56:09 2021
 @author: f.romano
 """
 from datetime import datetime
-from math import floor
 from binance.client import Client
 import pandas as pd
 import statistics 
+
+
+def calculate_values(samples, variables, values):
+    samples_mean=statistics.mean(samples)
+    for v in variables:
+        for i in range(v["n_values"]):
+            values[v["offset_values"]+i]=statistics.mean(samples[v["offset_samples"]+v["n_samples"]*i:v["offset_samples"]+v["n_samples"]*(i+1)])-samples_mean
+    #print(values)
+
+
+def import_samples():
+    df=pd.read_csv("Binance_BTCUSDT_minute.csv",usecols=[1, 3],parse_dates=[1],skiprows=1)
+    #print(df.head())
+    df["open"] = pd.to_numeric(df["open"], downcast="float")
+    df["date"] = pd.to_datetime(df["date"])
+    return df["open"].tolist()
+
+
+h_samples= import_samples()
+print(h_samples[:10])
+
+
+variables_definition=[
+    {"name":"minutes","n_samples":1,"n_values":300},
+    {"name":"15minutes","n_samples":15,"n_values":24},
+    {"name":"hours","n_samples":60,"n_values":48},
+    {"name":"6hours","n_samples":360,"n_values":8},
+    ]
+
+target_definition={"samples_from":5, "samples_to":60}
+
+
+
+n_samples=0
+n_values=0
+
+for v in variables_definition:
+    v["offset_values"]=n_values
+    v["offset_samples"]=n_samples
+    n_samples=n_samples+v["n_samples"]*v["n_values"]
+    n_values=n_values+v["n_values"]
+
+
+samples=[]
+for i in range(n_samples):
+    samples.append(h_samples[0])
+    h_samples.pop(0)
+    
+print(samples[:10])
+print(n_samples)
+
+values=list(range(n_values))
+
+
+count=0
+while(len(h_samples)>target_definition["samples_to"]):
+    samples.pop(-1)
+    samples.insert(0,h_samples[0]) 
+    h_samples.pop(0)
+    calculate_values(samples, variables_definition,values)
+    count+=1
+    if not count%100:
+        
+        print(count)
+    
+    
+
+
+dwcwd
+
+values=[]
+
+
+
+
+
+dede
 
 
 client = Client("4y2FAri1QZdyNWjO6BLp1FSiO0sXmQcEVKTKZwjfRpaklSbfX3wcLWd5Ikx8M6nw","sgwdst1CBgUDj9HHz74i9O5eJ0Zx2ATuMJUCMCiezC8EaD6xuO8mUyTs10krefXt")
@@ -29,36 +105,23 @@ prices = client.get_all_tickers()
 datatot=[]
 
 
-variables=[
-    ["seconds",1,300],
-    ["minutes",60,300],
-    ["15minutes",900,24],
-    ["hours",3600,48],
-    ["6hours",21600,8]
-    ]
-
-values=[]
 
 
 
-n_seconds=0
-sampls=0
-for v in variables:
-    v.append(n_seconds)
-    n_seconds=n_seconds+v[1]*v[2]
-    sampls=sampls+v[2]
-    val=[]
-    v.append(val)
-    
-# n_minutes=10
-values_seconds=[]
-# n_seconds=60
-# values_minutes=[]
+#n_seconds=0
 
-for i in range(n_seconds):
-    values_seconds.append(0)
-# for i in range(n_minutes):
-#     values_minutes.append(0)
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 while(1):
@@ -84,16 +147,6 @@ while(1):
             datatot.append(record)
             count+=1
             
-            values_seconds.pop(-1)
-            values_seconds.insert(0,record[1])
-            
-            
-            for v in variables:
-                v[4]=[]
-                for i in range(v[2]):
-                    v[4].append(floor(statistics.mean(values_seconds[v[3]+v[1]*i:v[3]+v[1]*(i+1)])))
-                    
-                    print(v[0],v[1],v[2],v[3])
             
             
             
