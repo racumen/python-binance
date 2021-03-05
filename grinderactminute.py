@@ -8,15 +8,24 @@ from datetime import datetime
 from binance.client import Client
 import pandas as pd
 import statistics 
-
+import sklearn
+import numpy as np
 
 def calculate_values(samples, variables, values):
-    samples_mean=statistics.mean(samples)
+    #samples_mean=statistics.mean(samples)
+    samples_mean=0
+    
     for v in variables:
         for i in range(v["n_values"]):
             values[v["offset_values"]+i]=statistics.mean(samples[v["offset_samples"]+v["n_samples"]*i:v["offset_samples"]+v["n_samples"]*(i+1)])-samples_mean
     #print(values)
 
+
+def get_target(samples, target_definition):
+    target_samples=samples[target_definition["samples_from"]:target_definition["samples_to"]]
+    target_samples.sort(reverse=True)
+    print(target_samples[:target_definition["n_samples"]])
+    return 100*((statistics.mean(target_samples[:5])-samples[0])/samples[0])
 
 def import_samples():
     df=pd.read_csv("Binance_BTCUSDT_minute.csv",usecols=[1, 3],parse_dates=[1],skiprows=1)
@@ -31,13 +40,13 @@ print(h_samples[:10])
 
 
 variables_definition=[
-    {"name":"minutes","n_samples":1,"n_values":300},
-    {"name":"15minutes","n_samples":15,"n_values":24},
-    {"name":"hours","n_samples":60,"n_values":48},
-    {"name":"6hours","n_samples":360,"n_values":8},
+    {"name":"minutes","n_samples":1,"n_values":5},
+    {"name":"15minutes","n_samples":15,"n_values":1},
+    {"name":"hours","n_samples":60,"n_values":1},
+    {"name":"6hours","n_samples":360,"n_values":1},
     ]
 
-target_definition={"samples_from":5, "samples_to":60}
+target_definition={"samples_from":10, "samples_to":20, "n_samples":5}
 
 
 
@@ -53,7 +62,8 @@ for v in variables_definition:
 
 samples=[]
 for i in range(n_samples):
-    samples.append(h_samples[0])
+    #samples.append(h_samples[0])
+    samples.append(0)
     h_samples.pop(0)
     
 print(samples[:10])
@@ -61,17 +71,35 @@ print(n_samples)
 
 values=list(range(n_values))
 
-
+h_samples=list(range(1000))
 count=0
+
+
+size=1000
+
+
+np_array = np.empty((0,4), dtype='float')
+
+X=np.array()
+y=np.array()
+
+cs
+
 while(len(h_samples)>target_definition["samples_to"]):
     samples.pop(-1)
-    samples.insert(0,h_samples[0]) 
+    #samples.insert(0,h_samples[0]) 
+    samples.insert(0,1) 
     h_samples.pop(0)
     calculate_values(samples, variables_definition,values)
+    target=get_target(h_samples, target_definition)
     count+=1
-    if not count%100:
-        
-        print(count)
+
+    
+
+    print(count,target,h_samples[:20])
+    z=input("cazus ")
+    if z != '':
+        qwwq
     
     
 

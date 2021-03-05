@@ -35,6 +35,7 @@ variables=[
     ["6hours",21600,12]
     ]
 
+values=[]
 
 
 
@@ -43,6 +44,10 @@ sampls=0
 for v in variables:
     secs=secs+v[1]*v[2]
     sampls=sampls+v[2]
+    val=[]
+    values.append(val)
+
+
 
 print(secs/3600/24,sampls)
 
@@ -70,6 +75,8 @@ while(1):
             datatot.append(record)
             average
             count+=1
+            
+            val[0].pop(0)
             
             
             
