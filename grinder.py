@@ -1,7 +1,6 @@
-    # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Created on Fri Feb 26 17:56:09 2021
-
 @author: f.romano
 """
 from datetime import datetime
@@ -13,7 +12,7 @@ client = Client("4y2FAri1QZdyNWjO6BLp1FSiO0sXmQcEVKTKZwjfRpaklSbfX3wcLWd5Ikx8M6n
 
 old_instant=0
 dt=1
-symbols=["BTCBUSD"]
+symbols=["BTCBUSD","ETHBUSD","ADABUSD","IOTABUSD","LTCBUSD","ZECBUSD","BCHBUSD"]
 savesize=3600
 
 
@@ -23,35 +22,6 @@ stats=[['minute']]
 time_res = client.get_server_time()
 info = client.get_exchange_info()
 prices = client.get_all_tickers()
-
-datatot=[]
-
-
-variables=[
-    ["seconds",1,300],
-    ["minutes",60,300],
-    ["15minutes",900,20],
-    ["hours",3600,48],
-    ["6hours",21600,12]
-    ]
-
-values=[]
-
-
-
-secs=0
-sampls=0
-for v in variables:
-    secs=secs+v[1]*v[2]
-    sampls=sampls+v[2]
-    val=[]
-    values.append(val)
-
-
-
-print(secs/3600/24,sampls)
-
-dedede
 while(1):
     data=[]
     count=0
@@ -68,17 +38,11 @@ while(1):
             record=[current_time]
             for p in prices:
                 if p['symbol'] in symbols:
-                    record.append(float(p['price']))
+                    record.append(p['price'])
             print(record)
             old_instant=instant
             data.append(record)
-            datatot.append(record)
-            average
             count+=1
-            
-            val[0].pop(0)
-            
-            
             
     columns=["TIME"]
     columns.extend(symbols)
