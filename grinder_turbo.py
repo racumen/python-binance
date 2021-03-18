@@ -13,15 +13,27 @@ import numpy as np
 from joblib import dump,load
 from sklearn.ensemble import RandomForestRegressor
 import grindfunc
+import telegram
 
-
+my_token = '1749392805:AAEq09tlCLSKMsTTdIAJx_fasgZ7iFfVPAA'
+def send(msg, chat_id, token=my_token):
+	"""
+	Send a mensage to a telegram user specified on chatId
+	chat_id must be a number!
+	"""
+	bot = telegram.Bot(token=token)
+	bot.sendMessage(chat_id=chat_id, text=msg)
 
 
 client = Client("4y2FAri1QZdyNWjO6BLp1FSiO0sXmQcEVKTKZwjfRpaklSbfX3wcLWd5Ikx8M6nw","sgwdst1CBgUDj9HHz74i9O5eJ0Zx2ATuMJUCMCiezC8EaD6xuO8mUyTs10krefXt")
+numeri=[876572799]
 
 old_instant=""
 savesize=20
 
+
+symbol1="BTC"
+symbol2="BUSD"
          
 variables_definition=[
     {"name":"minutes","n_samples":1,"n_values":60},
@@ -42,10 +54,10 @@ for v in variables_definition:
     
 values=list(range(n_values))
  
-df=pd.read_csv("GRINDER_SAMPLES.csv")
-df["VALUE"] = pd.to_numeric(df["VALUE"], downcast="float")
-samples=df["VALUE"].values.tolist()
-
+#df=pd.read_csv("GRINDER_SAMPLES.csv")
+#df["VALUE"] = pd.to_numeric(df["VALUE"], downcast="float")
+#samples=df["VALUE"].values.tolist()
+samples=[]
 
 #values=list(range(n_values))
 
@@ -122,7 +134,7 @@ while(1):
             samples.pop(-1)
             flag_start=True
         else:
-            print("SAMPLES",len(samples),"VS",n_samples)
+            print("LOADING SAMPLES:",len(samples),"VS",n_samples)
             flag_start=False
 
         samples.insert(0,current_avg)
@@ -144,6 +156,16 @@ while(1):
                     old_capital=capital
                     capital=0
                     confirm=0
+                    string1 = client.get_asset_balance(symbol1)
+                    string2 = client.get_asset_balance(symbol2)
+                    msg="PRE-BUY\t"+symbol1+"\t"+string1["free"]+"\t"+symbol2+"\t"+string2["free"]
+                    order = client.order_market_buy(symbol=symbol1+symbol2,quantity=0.001)
+                    string1 = client.get_asset_balance(symbol1)
+                    string2 = client.get_asset_balance(symbol2)
+                    msg=msg+"\n"+"AFTER-BUY\t"+symbol1+"\t"+string1["free"]+"\t"+symbol2+"\t"+string2["free"]
+                    print(msg)
+                    for num in numeri:
+                        send(msg,num)
             else:
                 confirm=0
             
@@ -216,7 +238,16 @@ while(1):
                     gain2=grindfunc.twodec(100*(capital-old_capital)/old_capital)
                     print(current_time,"\t",reason,"\t",round(current_avg),"\tCapital\t",round(capital),"\t\t\t%\t",round(gain2,2))
                     reason=""
-        
+                    string1 = client.get_asset_balance(symbol1)
+                    string2 = client.get_asset_balance(symbol2)
+                    msg="PRE-SELL\t"+symbol1+"\t"+string1["free"]+"\t"+symbol2+"\t"+string2["free"]
+                    order = client.order_market_SELL(symbol=symbol1+symbol2,quantity=0.001)
+                    string1 = client.get_asset_balance(symbol1)
+                    string2 = client.get_asset_balance(symbol2)
+                    msg=msg+"\n"+"AFTER-SELL\t"+symbol1+"\t"+string1["free"]+"\t"+symbol2+"\t"+string2["free"]
+                    print(msg)
+                    for num in numeri:
+                        send(msg,num)
             
             if BTC:
                 vecchio=vecchio+1
