@@ -54,10 +54,17 @@ for v in variables_definition:
     
 values=list(range(n_values))
  
+
+
+klines = client.get_historical_klines("BTCBUSD", Client.KLINE_INTERVAL_1MINUTE, "1 day ago UTC")
+samples=[float(row[4]) for row in klines[-1:-n_samples-1:-1]]
+print(samples[:3])
+print(len(samples))
+
 #df=pd.read_csv("GRINDER_SAMPLES.csv")
 #df["VALUE"] = pd.to_numeric(df["VALUE"], downcast="float")
 #samples=df["VALUE"].values.tolist()
-samples=[]
+#samples=[]
 
 #values=list(range(n_values))
 
@@ -151,14 +158,14 @@ while(1):
                 print(prediction[0],confirm)
                 if confirm>1:
                     action="BUY"
-                    BTC=capital/current_avg*(1-0.0075)
-                    print(current_time,"\tBUY    P",prediction[0],"\t",int(current_avg),"\tCapital\t",int(capital))
+                    BTC=capital/current_avg*(1-0.005)
+                    msg=current_time+"\tBUY    P: "+str(prediction[0])+"\t"+str(int(current_avg))+"\tCapital\t"+str(int(capital))
                     old_capital=capital
                     capital=0
                     confirm=0
                     string1 = client.get_asset_balance(symbol1)
                     string2 = client.get_asset_balance(symbol2)
-                    msg="PRE-BUY\t"+symbol1+"\t"+string1["free"]+"\t"+symbol2+"\t"+string2["free"]
+                    msg=msg+"\nPRE-BUY   \t"+symbol1+"\t"+string1["free"]+"\t"+symbol2+"\t"+string2["free"]
                     order = client.order_market_buy(symbol=symbol1+symbol2,quantity=0.001)
                     string1 = client.get_asset_balance(symbol1)
                     string2 = client.get_asset_balance(symbol2)
@@ -207,7 +214,7 @@ while(1):
                     flag_sell=True
                     reason=reason+"LOSS "+str(grindfunc.twodec(gain))
         
-                if vecchio>240 and gain<1:
+                if vecchio>240 and gain<0.97:
                     flag_sell=True
                     reason=reason+"VECCHIO "+str(grindfunc.twodec(gain))
         
@@ -236,12 +243,12 @@ while(1):
                     BTC=0
                     decrease=0
                     gain2=grindfunc.twodec(100*(capital-old_capital)/old_capital)
-                    print(current_time,"\t",reason,"\t",round(current_avg),"\tCapital\t",round(capital),"\t\t\t%\t",round(gain2,2))
+                    msg=current_time+"\tSELL\t"+reason+"\t"+str(round(current_avg))+"\tCapital\t"+str(round(capital))+"\t\t\t%\t"+str(round(gain2,2))+"\n"
                     reason=""
                     string1 = client.get_asset_balance(symbol1)
                     string2 = client.get_asset_balance(symbol2)
-                    msg="PRE-SELL\t"+symbol1+"\t"+string1["free"]+"\t"+symbol2+"\t"+string2["free"]
-                    order = client.order_market_SELL(symbol=symbol1+symbol2,quantity=0.001)
+                    msg=msg+"PRE-SELL   \t"+symbol1+"\t"+string1["free"]+"\t"+symbol2+"\t"+string2["free"]
+                    order = client.order_market_sell(symbol=symbol1+symbol2,quantity=0.001)
                     string1 = client.get_asset_balance(symbol1)
                     string2 = client.get_asset_balance(symbol2)
                     msg=msg+"\n"+"AFTER-SELL\t"+symbol1+"\t"+string1["free"]+"\t"+symbol2+"\t"+string2["free"]
