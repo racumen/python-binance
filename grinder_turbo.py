@@ -29,7 +29,7 @@ client = Client("4y2FAri1QZdyNWjO6BLp1FSiO0sXmQcEVKTKZwjfRpaklSbfX3wcLWd5Ikx8M6n
 numeri=[876572799]
 
 old_instant=""
-savesize=20
+savesize=10
 
 
 symbol1="BTC"
@@ -112,6 +112,7 @@ post_gain=-1
 maxgain=0.5
 old_val=0
 data=[]
+gain=0
 
 print("STARTING")
 while(1):
@@ -159,7 +160,9 @@ while(1):
                 if confirm>1:
                     action="BUY"
                     BTC=capital/current_avg*(1-0.005)
-                    msg=current_time+"\tBUY    P: "+str(prediction[0])+"\t"+str(int(current_avg))+"\tCapital\t"+str(int(capital))
+                    msg="BUY "
+                    record=[current_time,round(current_avg),round(prediction[0],3),action,round(capital),round(BTC,5),round(gain,3),round(post_gain),confirm,increase,decrease,reason,vecchio]
+                    msg=msg+str(record)+"\n"
                     old_capital=capital
                     capital=0
                     confirm=0
@@ -206,7 +209,7 @@ while(1):
                     flag_sell=True
                     reason=reason+"PREDICT "+str(grindfunc.twodec(gain))+str(decrease)
                     
-                if  (gain>1.05 and decrease>3):
+                if  (gain>1.05 and decrease>2):
                     flag_sell=True
                     reason=reason+"5gain   "+str(grindfunc.twodec(gain))
         
@@ -223,7 +226,7 @@ while(1):
                     reason=reason+"DEGUADO "+str(grindfunc.twodec(gain))+" "+str(grindfunc.twodec(maxgain))
         
                     
-                if decrease>3 and gain>1.0075:
+                if decrease>2 and gain>1.005:
                     flag_sell=True
                     reason=reason+"CALA "+str(grindfunc.twodec(gain))
                 
@@ -243,7 +246,9 @@ while(1):
                     BTC=0
                     decrease=0
                     gain2=grindfunc.twodec(100*(capital-old_capital)/old_capital)
-                    msg=current_time+"\tSELL\t"+reason+"\t"+str(round(current_avg))+"\tCapital\t"+str(round(capital))+"\t\t\t%\t"+str(round(gain2,2))+"\n"
+                    msg="SELL "
+                    record=[current_time,round(current_avg),round(prediction[0],3),action,round(capital),round(BTC,5),round(gain,3),round(post_gain),confirm,increase,decrease,reason,vecchio]
+                    msg=msg+str(record)+"\n"
                     reason=""
                     string1 = client.get_asset_balance(symbol1)
                     string2 = client.get_asset_balance(symbol2)
@@ -265,12 +270,6 @@ while(1):
             prev_value=current_avg
             post_gain=post_gain-1
 
-
-
-
-
-
-
             
             
             
@@ -290,3 +289,7 @@ while(1):
                 df.to_csv("GRINDER_"+current_time+".csv", index = False)
                 count=0
                 data=[]
+                msg=str(record)
+                for num in numeri:
+                    send(msg,num)
+            
