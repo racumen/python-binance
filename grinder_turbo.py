@@ -14,6 +14,7 @@ from joblib import dump,load
 from sklearn.ensemble import RandomForestRegressor
 import grindfunc
 import telegram
+import time
 
 my_token = '1749392805:AAEq09tlCLSKMsTTdIAJx_fasgZ7iFfVPAA'
 def send(msg, chat_id, token=my_token):
@@ -23,6 +24,14 @@ def send(msg, chat_id, token=my_token):
 	"""
 	bot = telegram.Bot(token=token)
 	bot.sendMessage(chat_id=chat_id, text=msg)
+
+def minute_dis(data1,data2):
+    #print(data1,data2)
+    datat1 = datetime.strptime(data1,"%Y-%m-%d %H:%M:%S")
+    datat2 = datetime.strptime(data2,"%Y-%m-%d %H:%M:%S")
+    minutes=(datat2-datat1).total_seconds()/60
+        
+    return minutes
 
 
 client = Client("4y2FAri1QZdyNWjO6BLp1FSiO0sXmQcEVKTKZwjfRpaklSbfX3wcLWd5Ikx8M6nw","sgwdst1CBgUDj9HHz74i9O5eJ0Zx2ATuMJUCMCiezC8EaD6xuO8mUyTs10krefXt")
@@ -114,21 +123,44 @@ old_val=0
 data=[]
 gain=0
 
+
+parameters={
+    "low_threshold_buy":1.5,
+    "confirm_buy":2
+    }
+
+
+
+ 
+now = datetime.now()
+old_time = now.strftime("%Y-%m-%d %H:%M:%S")    
+current_time = now.strftime("%Y-%m-%d %H:%M:%S")    
+
 print("STARTING")
 while(1):
     try:
         prices =  client.get_symbol_ticker(symbol="BTCBUSD")  
         #print(prices)
         current_val=prices["price"]
+        now = datetime.now()
+        old_time=current_time
+        current_time = now.strftime("%Y-%m-%d %H:%M:%S")    
+        instant=int(current_time[-5:-3])
+        minute_val.append(float(current_val))
+    
     except Exception as e: 
         print(e)
+        time.sleep(5)
         current_val=old_val
                 
         
-    now = datetime.now()
-    current_time = now.strftime("%Y-%m-%d %H:%M:%S")    
-    instant=int(current_time[-5:-3])
-    minute_val.append(float(current_val))
+    
+    delta_min=minute_dis(old_time,current_time)
+    #print(delta_min,post_gain)
+    if delta_min >2:
+        post_gain=max(delta_min*10,post_gain)
+    #print(post_gain)
+    
     
     if instant!=old_instant:
         if len(minute_val):
@@ -154,12 +186,12 @@ while(1):
             prediction = rf.predict(X)            
             
             action="NONE"
-            if capital>0 and ((prediction[0]>1.6 and decrease<1 and post_gain<0) or prediction[0]>2.5):
+            if capital>0 and ((prediction[0]>parameters["low_threshold_buy"] and decrease==0 and post_gain<0) or prediction[0]>2.5):
                 confirm+=1
-                print(prediction[0],confirm)
-                if confirm>1:
+                #print(prediction[0],confirm)
+                if confirm>parameters["confirm_buy"]:
                     action="BUY"
-                    BTC=capital/current_avg*(1-0.005)
+                    BTC=capital/current_avg*(1-0.006)
                     msg="BUY "
                     record=[current_time,round(current_avg),round(prediction[0],3),action,round(capital),round(BTC,5),round(gain,3),round(post_gain),confirm,increase,decrease,reason,vecchio]
                     msg=msg+str(record)+"\n"
@@ -184,7 +216,9 @@ while(1):
     
             if current_avg<prev_value*0.999:
                 decrease+=1
-                #print("calina",decrease)
+                if decrease>3:
+                    decrease=3
+            #print("calina",decrease)
             else:
                 decrease-=1
                 if decrease<0:
@@ -192,6 +226,9 @@ while(1):
             
             if current_avg>prev_value*1.001:
                 increase+=1
+                #decrease-=1
+                #if decrease<0:
+                #    decrease=0
                 #print("calina",decrease)
             else:
                 increase=0
@@ -213,7 +250,7 @@ while(1):
                     flag_sell=True
                     reason=reason+"5gain   "+str(grindfunc.twodec(gain))
         
-                if gain<0.95:
+                if gain<0.97:
                     flag_sell=True
                     reason=reason+"LOSS "+str(grindfunc.twodec(gain))
         
@@ -221,16 +258,16 @@ while(1):
                     flag_sell=True
                     reason=reason+"VECCHIO "+str(grindfunc.twodec(gain))
         
-                if vecchio>120 and gain>1.05 and(gain-1)<(maxgain-1)*0.4:
+                if  gain>1.015 and(gain-1)<(maxgain-1)*0.7:
                     flag_sell=True
                     reason=reason+"DEGUADO "+str(grindfunc.twodec(gain))+" "+str(grindfunc.twodec(maxgain))
         
                     
-                if decrease>2 and gain>1.005:
+                if decrease>4 and gain>1.02:
                     flag_sell=True
                     reason=reason+"CALA "+str(grindfunc.twodec(gain))
                 
-                if decrease>20 and gain>1.02:
+                if decrease>20 and gain>1.01:
                     flag_sell=True
                     reason=reason+"CALETTA "+str(grindfunc.twodec(gain))
         
@@ -277,6 +314,7 @@ while(1):
             record=[current_time,round(current_avg),round(prediction[0],3),action,round(capital),round(BTC,5),round(gain,3),round(post_gain),confirm,increase,decrease,reason,vecchio]
             print(record)
             
+            old_val=current_val
             old_instant=instant
             data.append(record)
             count+=1
@@ -284,9 +322,9 @@ while(1):
                 columns=["TIME","VALUE","PREDICTION","ACTION","CAPITAL","BTC","GAIN","POST_GAIN","CONFIRM","INCREASE","DECREASE","REASON","VECCHIO"]
                 df = pd.DataFrame (data,columns = columns)
                 now = datetime.now()
-                current_time = now.strftime("%Y_%m_%d_%H_%M_%S")    
-                print("SAVING FILE: GRINDER_"+current_time+".csv")
-                df.to_csv("GRINDER_"+current_time+".csv", index = False)
+                cu_time = now.strftime("%Y_%m_%d_%H_%M_%S")    
+                print("SAVING FILE: GRINDER_"+cu_time+".csv")
+                df.to_csv("./save/GRINDER_"+cu_time+".csv", index = False)
                 count=0
                 data=[]
                 msg=str(record)
