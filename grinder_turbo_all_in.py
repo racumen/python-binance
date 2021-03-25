@@ -15,6 +15,7 @@ from sklearn.ensemble import RandomForestRegressor
 import grindfunc
 import telegram
 import time
+import json
 
 my_token = '1749392805:AAEq09tlCLSKMsTTdIAJx_fasgZ7iFfVPAA'
 def send(msg, chat_id, token=my_token):
@@ -97,10 +98,28 @@ model='rf4.joblib'
 rf = load(model) 
 print("Caricato modello ",model)
 
-capital=100000
+
+
+parameters={
+    "low_threshold_buy":1.5,
+    "high_threshold_buy":2.3,
+    "confirm_buy":2,
+    "first_capital": 100,
+    "decrease_ratio": 0.9995,
+    "gain_ratio": 0.997,
+    "gain_loss_threshold":1.01,
+    "loss_threshold":0.997,
+    "old_threshold":0.9975,
+    "gain_loss_ratio":0.75,
+    "increase_ratio": 1.0005
+    }
+
+
+capital=parameters["first_capital"]
+old_capital=capital
+
 invested=0
 capit=[]
-old_capital=capital
 BTC=0
 buybu=[]
 buybuinst=[]
@@ -124,11 +143,6 @@ data=[]
 gain=0
 
 
-parameters={
-    "low_threshold_buy":1.5,
-    "confirm_buy":2
-    }
-
 
 
  
@@ -136,7 +150,12 @@ now = datetime.now()
 old_time = now.strftime("%Y-%m-%d %H:%M:%S")    
 current_time = now.strftime("%Y-%m-%d %H:%M:%S")    
 
-print("STARTING")
+msg="GRINDER STARTING\n"
+msg=msg+str(parameters)+"\n"
+print(msg)
+for num in numeri:
+    send(msg,num)
+            
 while(1):
     try:
         prices =  client.get_symbol_ticker(symbol="BTCBUSD")  
@@ -146,7 +165,8 @@ while(1):
         old_time=current_time
         current_time = now.strftime("%Y-%m-%d %H:%M:%S")    
         instant=int(current_time[-5:-3])
-        minute_val.append(float(current_val))
+        current_val_flo=float(current_val)
+        minute_val.append(current_val_flo)
     
     except Exception as e: 
         print(e)
@@ -181,19 +201,74 @@ while(1):
         
         
         if flag_start:
+
+            flag_sell=False
+
+            
+            orders={}
+            try:            
+                with open('orders.json', 'r') as fp:
+                    orders = json.load(fp)
+                if "sell" in orders:
+                    flag_sell=True
+                    orders.pop('sell', None)
+                with open('orders.json', 'w') as fp:
+                    json.dump(orders, fp)                
+                
+                with open('parameters.json', 'r') as fp:
+                    param_load = json.load(fp)
+                    for p in param_load:
+                        parameters[p]=param_load[p]
+                
+                if "sell" in orders:
+                    flag_sell=True
+                    orders.pop('sell', None)
+                with open('orders.json', 'w') as fp:
+                    json.dump(orders, fp)                
+            
+            
+            
+            except Exception as e:     
+                orders={}
+                #print(e)
+
+            
+            if current_avg<prev_value*parameters["decrease_ratio"]:
+                decrease+=1
+                if decrease>3:
+                    decrease=3
+            #print("calina",decrease)
+            else:
+                decrease-=1
+                if decrease<0:
+                    decrease=0
+            
+            if current_avg>prev_value*parameters["increase_ratio"]:
+                increase+=1
+                #decrease-=1
+                #if decrease<0:
+                #    decrease=0
+                #print("calina",decrease)
+            else:
+                increase=0
+                if increase<0:
+                    increase=0
+            
+            #print(parameters)
+            
             grindfunc.calculate_values(samples, variables_definition,values)
             X=np.array([values])
             prediction = rf.predict(X)            
             
             action="NONE"
-            if capital>0 and ((prediction[0]>parameters["low_threshold_buy"] and decrease==0 and post_gain<0) or prediction[0]>2.5):
+            if capital>0 and ((prediction[0]>parameters["low_threshold_buy"] and decrease==0 and post_gain<0) or prediction[0]>parameters["high_threshold_buy"]):
                 confirm+=1
                 #print(prediction[0],confirm)
-                if confirm>parameters["confirm_buy"]:
+                if confirm>=parameters["confirm_buy"]:
                     action="BUY"
-                    BTC=capital/current_avg*(1-0.003)
+                    BTC=round(capital/current_val_flo, 5)
                     msg="BUY "
-                    record=[current_time,round(current_avg),round(prediction[0],3),action,round(capital),round(BTC,5),round(gain,3),round(post_gain),confirm,increase,decrease,reason,vecchio]
+                    record=[current_time,round(current_val_flo),round(prediction[0],3),action,round(capital),round(BTC,5),round(gain,3),round(post_gain),confirm,increase,decrease,reason,vecchio]
                     msg=msg+str(record)+"\n"
                     old_capital=capital
                     capital=0
@@ -201,7 +276,7 @@ while(1):
                     string1 = client.get_asset_balance(symbol1)
                     string2 = client.get_asset_balance(symbol2)
                     msg=msg+"\nPRE-BUY   \t"+symbol1+"\t"+string1["free"]+"\t"+symbol2+"\t"+string2["free"]
-                    order = client.order_market_buy(symbol=symbol1+symbol2,quantity=0.001)
+                    order = client.order_market_buy(symbol=symbol1+symbol2,quantity=BTC)
                     string1 = client.get_asset_balance(symbol1)
                     string2 = client.get_asset_balance(symbol2)
                     msg=msg+"\n"+"AFTER-BUY\t"+symbol1+"\t"+string1["free"]+"\t"+symbol2+"\t"+string2["free"]
@@ -212,30 +287,9 @@ while(1):
                 confirm=0
             
     
-            flag_sell=False
     
-            if current_avg<prev_value*0.999:
-                decrease+=1
-                if decrease>3:
-                    decrease=3
-            #print("calina",decrease)
-            else:
-                decrease-=1
-                if decrease<0:
-                    decrease=0
-            
-            if current_avg>prev_value*1.001:
-                increase+=1
-                #decrease-=1
-                #if decrease<0:
-                #    decrease=0
-                #print("calina",decrease)
-            else:
-                increase=0
-                if increase<0:
-                    increase=0
                 
-            gain=BTC*current_avg/old_capital
+            gain=BTC*current_val_flo/old_capital*parameters["gain_ratio"]
             
             if  BTC>0:
                 reason=""
@@ -250,15 +304,15 @@ while(1):
                     flag_sell=True
                     reason=reason+"5gain   "+str(grindfunc.twodec(gain))
         
-                if gain<0.97:
+                if gain<parameters["loss_threshold"]:
                     flag_sell=True
                     reason=reason+"LOSS "+str(grindfunc.twodec(gain))
         
-                if vecchio>240 and gain<0.97:
+                if vecchio>240 and gain<parameters["old_threshold"]:
                     flag_sell=True
                     reason=reason+"VECCHIO "+str(grindfunc.twodec(gain))
         
-                if  gain>1.015 and(gain-1)<(maxgain-1)*0.7:
+                if  maxgain>parameters["gain_loss_threshold"] and(gain-1)<(maxgain-1)*parameters["gain_loss_ratio"]:
                     flag_sell=True
                     reason=reason+"DEGUADO "+str(grindfunc.twodec(gain))+" "+str(grindfunc.twodec(maxgain))
         
@@ -278,7 +332,7 @@ while(1):
                     
                 if flag_sell:
                     action="SELL"
-                    post_gain=(gain-1)*3000
+                    post_gain=(gain-1.008)*3000
                     capital=BTC*current_avg
                     BTC=0
                     decrease=0
@@ -290,7 +344,7 @@ while(1):
                     string1 = client.get_asset_balance(symbol1)
                     string2 = client.get_asset_balance(symbol2)
                     msg=msg+"PRE-SELL   \t"+symbol1+"\t"+string1["free"]+"\t"+symbol2+"\t"+string2["free"]
-                    order = client.order_market_sell(symbol=symbol1+symbol2,quantity=0.001)
+                    order = client.order_market_sell(symbol=symbol1+symbol2,quantity=BTC)
                     string1 = client.get_asset_balance(symbol1)
                     string2 = client.get_asset_balance(symbol2)
                     msg=msg+"\n"+"AFTER-SELL\t"+symbol1+"\t"+string1["free"]+"\t"+symbol2+"\t"+string2["free"]

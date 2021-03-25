@@ -7,3 +7,6 @@ dist/
 python_binance.egg-info/
 *__pycache__
 *.egg-info/
+*.csv
+DATA_2021_03_03_02_02_58.csv
+DATA_2021_03_03_02_02_59.csv
