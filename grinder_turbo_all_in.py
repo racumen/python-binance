@@ -108,7 +108,7 @@ parameters={
     "decrease_ratio": 0.9995,
     "gain_ratio": 0.997,
     "gain_loss_threshold":1.01,
-    "loss_threshold":0.997,
+    "loss_threshold":0.97,
     "old_threshold":0.9975,
     "gain_loss_ratio":0.75,
     "increase_ratio": 1.0005
@@ -215,10 +215,7 @@ while(1):
                 with open('orders.json', 'w') as fp:
                     json.dump(orders, fp)                
                 
-                with open('parameters.json', 'r') as fp:
-                    param_load = json.load(fp)
-                    for p in param_load:
-                        parameters[p]=param_load[p]
+                            
                 
                 if "sell" in orders:
                     flag_sell=True
@@ -230,8 +227,21 @@ while(1):
             
             except Exception as e:     
                 orders={}
-                #print(e)
+                print(e)
 
+            try:            
+                with open('parameters.json', 'r') as fp:
+                    param_load = json.load(fp)
+                    for p in param_load:
+                        print(p,param_load[p])
+                        if parameters[p]!=param_load[p]:
+                            print("setting ",p,"to",str(param_load[p]))
+                            parameters[p]=param_load[p]
+
+            except Exception as e:     
+                #orders={}
+                #print(e)
+                pass
             
             if current_avg<prev_value*parameters["decrease_ratio"]:
                 decrease+=1
@@ -289,7 +299,7 @@ while(1):
     
     
                 
-            gain=BTC*current_val_flo/old_capital*parameters["gain_ratio"]
+            gain=BTC*current_avg/old_capital*parameters["gain_ratio"]
             
             if  BTC>0:
                 reason=""
@@ -306,7 +316,7 @@ while(1):
         
                 if gain<parameters["loss_threshold"]:
                     flag_sell=True
-                    reason=reason+"LOSS "+str(grindfunc.twodec(gain))
+                    reason=reason+"LOSS "+str(round(gain,4))
         
                 if vecchio>240 and gain<parameters["old_threshold"]:
                     flag_sell=True
@@ -333,12 +343,12 @@ while(1):
                 if flag_sell:
                     action="SELL"
                     post_gain=(gain-1.008)*3000
-                    capital=BTC*current_avg
-                    BTC=0
+                    maxgain=0
                     decrease=0
                     gain2=grindfunc.twodec(100*(capital-old_capital)/old_capital)
                     msg="SELL "
-                    record=[current_time,round(current_avg),round(prediction[0],3),action,round(capital),round(BTC,5),round(gain,3),round(post_gain),confirm,increase,decrease,reason,vecchio]
+                    record=[current_time,round(current_avg),round(prediction[0],3),action,round(capital),round(BTC,6),round(gain,4),round(post_gain),confirm,increase,decrease,reason,vecchio]
+                    capital=BTC*current_val_flo*parameters["gain_ratio"]
                     msg=msg+str(record)+"\n"
                     reason=""
                     string1 = client.get_asset_balance(symbol1)
@@ -351,7 +361,7 @@ while(1):
                     print(msg)
                     for num in numeri:
                         send(msg,num)
-            
+                    BTC=0
             if BTC:
                 vecchio=vecchio+1
             else:
