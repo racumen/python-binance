@@ -227,13 +227,13 @@ while(1):
             
             except Exception as e:     
                 orders={}
-                print(e)
+                #print(e)
 
             try:            
                 with open('parameters.json', 'r') as fp:
                     param_load = json.load(fp)
                     for p in param_load:
-                        print(p,param_load[p])
+                        #print(p,param_load[p])
                         if parameters[p]!=param_load[p]:
                             print("setting ",p,"to",str(param_load[p]))
                             parameters[p]=param_load[p]
