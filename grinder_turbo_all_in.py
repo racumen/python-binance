@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Fri Feb 26 17:56:09 2021
-@author: f.romano
-"""
 from datetime import datetime
 from math import floor
 from binance.client import Client
@@ -39,7 +34,7 @@ client = Client("4y2FAri1QZdyNWjO6BLp1FSiO0sXmQcEVKTKZwjfRpaklSbfX3wcLWd5Ikx8M6n
 numeri=[876572799]
 
 old_instant=""
-savesize=10
+savesize=5
 
 
 symbol1="BTC"
@@ -104,7 +99,7 @@ parameters={
     "low_threshold_buy":1.5,
     "high_threshold_buy":2.3,
     "confirm_buy":2,
-    "first_capital": 100,
+    "first_capital": 102,
     "decrease_ratio": 0.9995,
     "gain_ratio": 0.997,
     "gain_loss_threshold":1.01,
@@ -143,7 +138,7 @@ data=[]
 gain=0
 
 
-
+save_sec=[]
 
  
 now = datetime.now()
@@ -167,7 +162,10 @@ while(1):
         instant=int(current_time[-5:-3])
         current_val_flo=float(current_val)
         minute_val.append(current_val_flo)
-    
+        if current_time!= old_time:
+            save_sec.append([current_time,current_val])
+        
+        
     except Exception as e: 
         print(e)
         time.sleep(5)
@@ -213,16 +211,7 @@ while(1):
                     flag_sell=True
                     orders.pop('sell', None)
                 with open('orders.json', 'w') as fp:
-                    json.dump(orders, fp)                
-                
-                            
-                
-                if "sell" in orders:
-                    flag_sell=True
-                    orders.pop('sell', None)
-                with open('orders.json', 'w') as fp:
-                    json.dump(orders, fp)                
-            
+                    json.dump(orders, fp)                            
             
             
             except Exception as e:     
@@ -394,4 +383,22 @@ while(1):
                 msg=str(record)
                 for num in numeri:
                     send(msg,num)
-            
+        
+                columns=["TIME","VALUE"]
+                df = pd.DataFrame (save_sec,columns = columns)
+                now = datetime.now()
+                cu_time = now.strftime("%Y_%m_%d_%H_%M_%S")    
+                print("SAVING FILE: SEC_GRINDER_"+cu_time+".csv")
+                df.to_csv("./save/SEC_GRINDER_"+cu_time+".csv", index = False)
+                save_sec=[]
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
